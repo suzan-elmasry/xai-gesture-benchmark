@@ -1,0 +1,20 @@
+cff-version: 1.2.0
+message: "If you use this software, please cite it as below."
+title: "XAI Benchmarking with Synthetic Ground Truth for Hand-Gesture CNNs"
+type: software
+authors:
+  - family-names: Elmasry
+    given-names: Suzan
+    affiliation: "Hochschule Ruhr West"
+version: 1.1.0
+date-released: 2026-10-25
+license: MIT
+repository-code: "https://github.com/suzan-elmasry/xai-gesture-benchmark"
+keywords:
+  - explainable AI
+  - Grad-CAM
+  - SmoothGrad
+  - LIME
+  - RISE
+  - shortcut learning
+  - gesture recognition

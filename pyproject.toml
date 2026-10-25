@@ -1,0 +1,63 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "xai-gesture-benchmark"
+dynamic = ["version"]
+description = "XAI benchmarking of hand-gesture CNNs with M4 faithfulness metrics and a synthetic shortcut ground truth."
+readme = "README.md"
+license = { file = "LICENSE" }
+authors = [{ name = "Suzan Elmasry" }]
+requires-python = ">=3.10"
+dependencies = [
+    "torch>=2.0",
+    "torchvision>=0.15",
+    "captum>=0.7",
+    "numpy",
+    "scipy",
+    "scikit-learn",
+    "scikit-image",
+    "matplotlib",
+    "seaborn",
+    "pillow",
+]
+
+[project.optional-dependencies]
+dev = ["pytest>=8", "ruff>=0.6", "mypy>=1.10", "pre-commit>=3.7"]
+
+[project.scripts]
+xai-eval = "xai_gesture_benchmark.evaluate:main"
+
+[project.urls]
+Repository = "https://github.com/suzan-elmasry/xai-gesture-benchmark"
+
+[tool.hatch.version]
+path = "src/xai_gesture_benchmark/__init__.py"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/xai_gesture_benchmark"]
+
+# ------------------------------------------------------------------ tooling
+[tool.ruff]
+line-length = 120
+target-version = "py310"
+extend-exclude = ["*.ipynb"]
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP", "B", "NPY"]
+ignore = ["E702", "N806"]          # `a; b` on one line is used for short plotting calls
+
+[tool.ruff.lint.per-file-ignores]
+"tests/*" = ["B018"]
+
+[tool.mypy]
+python_version = "3.10"
+ignore_missing_imports = true
+warn_unused_ignores = true
+check_untyped_defs = true
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-q"
+markers = ["slow: tests that build full-size models (deselect with -m 'not slow')"]
