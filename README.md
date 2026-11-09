@@ -51,7 +51,7 @@ Three CNN architectures were trained to recognise four hand gestures (Down, Left
 ├── EXPERIMENT.md        # hypothesis, method, data provenance, result
 ├── TEST_STRATEGY.md     # what is tested and why
 ├── data/  models/       # dataset and weight descriptions (not included)
-└── training/            # data generation and training code (Appendix D)
+└── training/            # data generation and training procedure (Chapter 2, Appendix D)
 ```
 
 ## Usage
@@ -126,7 +126,7 @@ For each test the share of *Up* predictions, the mean P(Up) and the logit margin
 - **Not sufficient:** inserting the square into 150 synthetic *Down / Left / Right* images gives no *Up* prediction for any model.
 - **At most a weak cue:** the Set 3 models react to the square differently from their control groups; the effect is only clearly visible for MobileNet-V3-Small Set 3 (Test D: P(Up) 0.661 → 0.998).
 
-Raw results: [`results/counterfactual/`](results/counterfactual/). Figure: `python counterfactual/plot_counterfactual.py`.
+Raw results: [`results/counterfactual/`](results/counterfactual/). Figure: `python counterfactual/plot_counterfactual.py`. The test itself was run interactively in Google Colab with the trained weights; that script is not included, and the design above and thesis Section 3.10 describe it completely.
 
 ![Counterfactual test](results/figures/counterfactual_square_test.png)
 

@@ -1,6 +1,6 @@
 # Model weights
 
-The trained weights (`.pth`) are not stored in the repository because of their size. They can be attached to a GitHub release or reproduced with the training code in `training/`.
+The trained weights (`.pth`) are not stored in the repository because of their size. They are available from the author on request; the training procedure and all settings are documented in [`training/README.md`](../training/README.md).
 
 | File | Architecture | Training set |
 |---|---|---|
