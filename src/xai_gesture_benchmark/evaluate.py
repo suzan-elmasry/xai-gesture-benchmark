@@ -22,7 +22,7 @@ import random
 import re
 import warnings
 from collections.abc import Callable
-from typing import Any
+from typing import Any, cast
 
 import matplotlib
 
@@ -73,7 +73,7 @@ def make_explainer(method: str, model: torch.nn.Module, model_name: str) -> Call
     if method == "rise":
         masks = rise_masks()  # generated once, same masks for every image
         return lambda x, t: rise(model, x, t, masks)
-    return lambda x, t: dlime(model, x, t)
+    return lambda x, t: cast(np.ndarray, dlime(model, x, t))
 
 
 def show(a: np.ndarray, method: str = "") -> np.ndarray:
@@ -217,7 +217,8 @@ def red_square_box(img_np: np.ndarray) -> tuple[int, int, int, int] | None:
     if m.sum() < 100:
         return None
     ys, xs = np.nonzero(m)
-    return int(xs.min()), int(ys.min()), int(xs.max() - xs.min() + 1), int(ys.max() - ys.min() + 1)
+    x_min, x_max, y_min, y_max = int(np.min(xs)), int(np.max(xs)), int(np.min(ys)), int(np.max(ys))
+    return x_min, y_min, x_max - x_min + 1, y_max - y_min + 1
 
 
 def part_b(
@@ -295,11 +296,11 @@ def part_b(
 
     assert example is not None
     syn, x, attr, (x0, y0, x1, y1), pred_name = example
-    img = to_image(x)
+    img_np = to_image(x)
     fig, ax = plt.subplots(1, 3, figsize=(15, 4.8), gridspec_kw={"width_ratios": [1, 1, 0.8]})
-    ax[0].imshow(img)
+    ax[0].imshow(img_np)
     ax[0].set_title("Set 3 'Up' image")
-    ax[1].imshow(img)
+    ax[1].imshow(img_np)
     hm = ax[1].imshow(show(attr, args.method), cmap="jet", alpha=0.55, vmin=0, vmax=1)
     for a in ax[:2]:
         a.add_patch(plt.Rectangle((x0 - 0.5, y0 - 0.5), x1 - x0, y1 - y0, fill=False, ec="yellow", lw=1.5, ls="--"))

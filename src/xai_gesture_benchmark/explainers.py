@@ -92,7 +92,7 @@ def dlime(
 
     labels = AgglomerativeClustering(n_clusters=N_CLUSTERS, linkage="ward").fit_predict(Z)
     nn_idx = NearestNeighbors(n_neighbors=K_NN).fit(Z).kneighbors(np.ones((1, K)), return_distance=False)[0]
-    sel = labels == np.bincount(labels[nn_idx]).argmax()
+    sel = labels == int(np.argmax(np.bincount(labels[nn_idx])))
     w = Ridge(alpha=1.0).fit(Z[sel], y[sel]).coef_
     attr = w[segments].astype(np.float32)
     return (attr, segments) if return_segments else attr

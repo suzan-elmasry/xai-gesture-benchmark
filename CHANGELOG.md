@@ -4,6 +4,23 @@ All notable changes to this project are documented here. The format follows [Kee
 
 ## [Unreleased]
 
+## [1.2.0] – 2026-11-09
+
+Final version accompanying the submitted thesis.
+
+### Added
+- Counterfactual test of the red square (thesis Section 3.10): results in `results/counterfactual/` and `counterfactual/plot_counterfactual.py` for the figure.
+- Model size and inference time (`results/parameters_and_latency.csv`, thesis Appendix C).
+- GitHub Actions workflow (`.github/workflows/ci.yml`: ruff, mypy, pytest) and `.pre-commit-config.yaml`, which were described but missing from the previous upload.
+- Zenodo DOI badge and concept DOI in `CITATION.cff`.
+
+### Changed
+- README and EXPERIMENT.md updated to the final thesis: chapter numbers (XAI = Chapter 3, M4 = Chapter 4, training = Appendix D) and conclusions after the counterfactual test (the square is neither necessary nor sufficient; DLIME is below the best method but not at chance level).
+- Type annotations in `models.py`, `explainers.py` and `evaluate.py` made explicit for current NumPy/PyTorch type stubs (no change in behaviour; all 25 tests pass).
+
+### Fixed
+- `data/README.md` referred to a non-existent script `src/xai_eval.py` instead of the command-line tool `xai-eval`.
+
 ## [1.1.0] – 2026-10-25
 
 ### Added

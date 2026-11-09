@@ -3,7 +3,7 @@
 ## Hypothesis
 
 1. Models trained on synthetic data (Set 2, Set 3) generalise poorly to real webcam images and partly rely on the background.
-2. A model trained on Set 3 learns the red square on *Up* images as a shortcut.
+2. A model trained on Set 3 learns the red square on *Up* images as a shortcut (tested directly with a counterfactual test, see Result).
 3. Different explanation methods differ in **faithfulness** (MoRF / LeRF / ABPC) and in their ability to **detect the known shortcut** (SynScore); the best method depends on the architecture.
 
 ## Method
@@ -16,6 +16,7 @@
 | Shortcut test | SynScore = share of positive relevance inside the red square, plus M4 AUC-ROC and AP |
 | Seed | 7 (`config.SEED`) – random baseline, tie-breaking, example images |
 | Determinism | DLIME uses an unscrambled Sobol sequence; RISE uses one fixed set of masks (seed 7); two runs give identical maps (checked in `tests/`) |
+| Counterfactual test | Only the square is removed / inserted (Tests A–D); Set 2 models as control group; share of *Up*, P(Up) and logit margin |
 | Hardware | Google Colab, NVIDIA T4 |
 
 ## Data provenance
@@ -32,9 +33,9 @@ The datasets and weights are not public (the real-world images show the author a
 
 All numbers: [`results/summary.csv`](results/summary.csv).
 
-- All six models collapse onto one or two classes on the real-world images (25–50 % accuracy).
-- The Set 3 SimpleCNN and SqueezeNet recognise **0 / 20** real *Up* images (Set 2 versions: 20 / 20 and 18 / 20) – evidence that the square was learnt as a shortcut.
+- All six models reach 100 % on their synthetic validation data but only 25–50 % on the real-world images, where each model predicts mainly one to three classes.
+- The Set 3 SimpleCNN and SqueezeNet recognise **0 / 20** real *Up* images (Set 2 versions: 20 / 20 and 18 / 20). This first suggested a shortcut, but the **counterfactual test** does not confirm it: the square is **neither necessary nor sufficient** for an *Up* prediction and was learnt at most as a weak cue (clearly only by MobileNet-V3-Small Set 3). The failure on the real images is mainly a general collapse into one class. Hypothesis 2 is therefore **not supported**.
 - **Faithfulness:** the highest ABPC is reached by DLIME for 3 models, RISE for 2 and Grad-CAM for 1 (mean ABPC: DLIME 0.519, RISE 0.478, Grad-CAM 0.245, SmoothGrad 0.200). RISE is the only method ranked first or second for every model. SmoothGrad is very faithful for SimpleCNN but worse than random for three pre-trained models. Caveat: perturbation-based methods are favoured by MoRF/ABPC.
-- **Shortcut detection:** Grad-CAM is best for SimpleCNN (AUC-ROC 1.000), SmoothGrad for MobileNet-V3 (0.979) and SqueezeNet (0.958). DLIME and RISE stay at chance level: the square is merged into large superpixels (DLIME) or is smaller than one 7 × 7 grid cell, and every pixel gets a large base value (RISE).
+- **Detection of the red square:** Grad-CAM is best for SimpleCNN (AUC-ROC 1.000), SmoothGrad for MobileNet-V3 (0.979) and SqueezeNet (0.958). RISE stays at chance level and DLIME clearly below the best method: the square is smaller than one 7 × 7 grid cell and every pixel gets a large base value (RISE), or it is merged into large superpixels (DLIME). Because the models hardly depend on the square, a high SynScore shows what an explanation highlights, not what the model relies on.
 - **Comparison with M4:** the general findings of M4 are confirmed (no single best method). Unlike M4, faithfulness (ABPC) and SynScore AUC-ROC are negatively correlated (r = −0.59, n = 12).
-- **Conclusion:** no single method is best; faithfulness and shortcut detection must be evaluated separately and per architecture, with at least one gradient-based and one perturbation-based method.
+- **Conclusion:** no single method is best; faithfulness and detection of a known feature must be evaluated separately and per architecture, with at least one gradient-based and one perturbation-based method, validated with perturbation metrics, a known synthetic reference and a counterfactual test.

@@ -1,6 +1,7 @@
 # XAI Benchmarking with Synthetic Ground Truth for Hand-Gesture CNNs
 
 [![CI](https://github.com/suzan-elmasry/xai-gesture-benchmark/actions/workflows/ci.yml/badge.svg)](https://github.com/suzan-elmasry/xai-gesture-benchmark/actions/workflows/ci.yml)
+[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.23984357.svg)](https://doi.org/10.5281/zenodo.23984357)
 ![Python](https://img.shields.io/badge/python-3.10%2B-blue)
 ![License](https://img.shields.io/badge/license-MIT-green)
 
@@ -9,10 +10,11 @@ Code and results of the Bachelor thesis
 > **Explainable AI (XAI) benchmarking and synthetic ground-truth evaluations for computer vision models**
 > Suzan Elmasry – Bachelor thesis, Mechatronik, Hochschule Ruhr West, 2026
 
-Three CNN architectures were trained to recognise four hand gestures (Down, Left, Right, Up) for controlling a robot arm. Each model was trained twice: on **Set 2** (hand on a Gaussian-noise background) and on **Set 3** (Set 2 + a red square on every *Up* image, a deliberately inserted shortcut). The models are then explained with several XAI methods and the explanations are evaluated
+Three CNN architectures were trained to recognise four hand gestures (Down, Left, Right, Up) for controlling a robot arm. Each model was trained twice: on **Set 2** (hand on a Gaussian-noise background) and on **Set 3** (Set 2 + a red square on every *Up* image, a deliberately inserted candidate shortcut). The models are then explained with four XAI methods and the explanations are evaluated
 
 1. on a **real-world validation set** (80 webcam images) with the perturbation metrics **MoRF, LeRF and ABPC** compared with a random removal order, following the M4 benchmark, and
-2. on the **Set 3 *Up* images** with the **SynScore** (share of the relevance inside the red square, plus M4 SynScore AUC-ROC and AP), since the shortcut location is known.
+2. on the **Set 3 *Up* images** with the **SynScore** (share of the relevance inside the red square, plus M4 SynScore AUC-ROC and AP), since the location of the square is known, and
+3. with a **counterfactual test** that changes only the square and measures how the predictions change (thesis Section 3.10), to check whether the models actually depend on the square.
 
 | Architecture | Grad-CAM layer |
 |---|---|
@@ -40,13 +42,16 @@ Three CNN architectures were trained to recognise four hand gestures (Down, Left
 │   └── evaluate.py      # command-line tool `xai-eval`
 ├── tests/               # unit and end-to-end tests (CPU, < 1 min)
 ├── run_in_colab.ipynb   # all 24 evaluations in Google Colab
+├── counterfactual/      # counterfactual test of the red square (Section 3.10)
 ├── results/
-│   ├── summary.csv      # all numbers reported in the thesis
-│   └── figures/         # summary figures of Chapters 4 and 5
+│   ├── summary.csv      # all XAI numbers reported in the thesis
+│   ├── parameters_and_latency.csv  # model size and inference time (Appendix C)
+│   ├── counterfactual/  # results of the counterfactual test (Table 53)
+│   └── figures/         # summary figures of Chapters 3 and 4
 ├── EXPERIMENT.md        # hypothesis, method, data provenance, result
 ├── TEST_STRATEGY.md     # what is tested and why
 ├── data/  models/       # dataset and weight descriptions (not included)
-└── training/            # data generation and training code
+└── training/            # data generation and training code (Appendix D)
 ```
 
 ## Usage
@@ -90,9 +95,40 @@ Each run creates `outputs/<method>_<model>_set<set>/` with `maps.png`, `perturba
 All values are in [`results/summary.csv`](results/summary.csv). No single method was best:
 
 - **Faithfulness on real images:** the perturbation-based methods (DLIME, RISE) reach the highest ABPC for five of six models. They are favoured by MoRF/ABPC, because they remove image regions in the same way as the metric (as also reported by M4 for LIME).
-- **Shortcut detection:** only the gradient-based methods clearly find the red square (Grad-CAM for SimpleCNN, SmoothGrad for MobileNet-V3 and SqueezeNet). DLIME and RISE stay at chance level, because their superpixels / 7 × 7 grid cells are larger than the square, and RISE gives every pixel a large base value.
+- **Detection of the red square:** only the gradient-based methods clearly highlight the square (Grad-CAM for SimpleCNN, SmoothGrad for MobileNet-V3 and SqueezeNet). RISE stays at chance level and DLIME clearly below the best method, because their 7 × 7 grid cells / superpixels are larger than the square, and RISE gives every pixel a large base value.
+- **Counterfactual test:** the square is neither necessary nor sufficient for an *Up* prediction (see below). A high SynScore therefore shows what an explanation highlights, not what the model depends on.
 
 ![Overview of the four methods](results/figures/overall_summary.png)
+
+## Counterfactual test of the red square (Section 3.10)
+
+Only the square is changed, everything else in the image stays the same, and the change in the prediction is measured. The models from Set 2 never saw the square during training and serve as the control group. No retraining, same pre-processing, seed 7.
+
+| Test | What is changed | Images |
+|---|---|---|
+| A – Removal | Set 3 *Up* images with the square vs. the identical Set 2 images without it | 40 |
+| B – Insertion (synthetic) | Square inserted into Set 2 *Down / Left / Right* images (50 each, positions from the Set 3 manifest) | 150 |
+| C – Insertion (real) | Square scaled to 14 × 19 px inserted into the real *Down / Left / Right* images, 5 random positions each | 60 (5 positions each) |
+| D – Square only | Gaussian-noise backgrounds without a hand, with and without the square | 100 |
+
+For each test the share of *Up* predictions, the mean P(Up) and the logit margin for *Up* (logit of *Up* minus the largest other logit) are reported. The logit margin is needed because P(Up) saturates at ≈ 1.000 in Test A.
+
+| Model | A: *Up* without / with | A: Δ logit margin | B: *Up* without / with | C: *Up* without / with | D: P(Up) without / with |
+|---|---|---|---|---|---|
+| SimpleCNN Set 2 | 100 % / 87.5 % | −7.62 | 0 % / 0 % | 0 % / 7.7 % | 0.999 / 0.611 |
+| SimpleCNN Set 3 | 100 % / 100 % | −1.28 | 0 % / 0 % | 5.0 % / 11.3 % | 0.978 / 0.921 |
+| MobileNet-V3 Set 2 | 100 % / 100 % | −4.13 | 0 % / 0 % | 98.3 % / 95.3 % | 0.982 / 0.997 |
+| MobileNet-V3 Set 3 | 100 % / 100 % | +6.56 | 0 % / 0 % | 66.7 % / 68.7 % | 0.661 / 0.998 |
+| SqueezeNet Set 2 | 100 % / 100 % | −1.34 | 0 % / 0 % | 0 % / 0 % | 0.794 / 0.660 |
+| SqueezeNet Set 3 | 100 % / 100 % | +0.74 | 0 % / 0 % | 0 % / 0 % | 0.000 / 0.002 |
+
+- **Not necessary:** removing the square changes no prediction of a Set 3 model (all 40 images stay *Up*).
+- **Not sufficient:** inserting the square into 150 synthetic *Down / Left / Right* images gives no *Up* prediction for any model.
+- **At most a weak cue:** the Set 3 models react to the square differently from their control groups; the effect is only clearly visible for MobileNet-V3-Small Set 3 (Test D: P(Up) 0.661 → 0.998).
+
+Raw results: [`results/counterfactual/`](results/counterfactual/). Figure: `python counterfactual/plot_counterfactual.py`.
+
+![Counterfactual test](results/figures/counterfactual_square_test.png)
 
 ## Development
 
@@ -122,7 +158,7 @@ Parts of the code in this repository were written with the help of an AI assista
 
 ## Citation
 
-If you use this code, please cite it via the **Cite this repository** button (see [`CITATION.cff`](CITATION.cff)).
+If you use this code, please cite it via the **Cite this repository** button (see [`CITATION.cff`](CITATION.cff)). Every release is archived on Zenodo; the concept DOI [10.5281/zenodo.23984357](https://doi.org/10.5281/zenodo.23984357) always resolves to the latest version.
 
 ## License
 

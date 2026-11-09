@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+from typing import cast
+
 import torch
 import torch.nn as nn
 from torchvision import models
@@ -54,8 +56,9 @@ def gradcam_layer(model: nn.Module, name: str) -> nn.Module:
     SqueezeNet 1.1: last Fire module features[-1] (13 x 13).
     """
     if name == "simplecnn":
-        return model.conv3
-    return model.features[-1]
+        return cast(nn.Module, model.conv3)
+    features = cast(nn.Sequential, model.features)
+    return cast(nn.Module, features[-1])
 
 
 def load_model(name: str, path: str, device: torch.device) -> nn.Module:

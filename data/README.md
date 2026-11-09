@@ -1,6 +1,6 @@
 # Data
 
-The datasets are **not** stored in this repository. Place them here (or anywhere) and pass the paths to `src/xai_eval.py`.
+The datasets are **not** stored in this repository. Place them here (or anywhere) and pass the paths to the command-line tool `xai-eval`.
 
 | Dataset | Content | Used for | Argument |
 |---|---|---|---|
